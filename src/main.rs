@@ -1,6 +1,7 @@
 mod generator;
 
 use clap::Parser;
+use generator::{PasswordPolicy, generate_password};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -46,5 +47,17 @@ fn main() {
         eprintln!("Error: {}", e);
         std::process::exit(1);
     }
-    println!("{:?}", cli);
+
+    let policy = PasswordPolicy {
+        length: cli.length,
+        include_upper: true,
+        include_lower: true,
+        include_digits: true,
+        include_symbols: !cli.no_symbols,
+        require_each_class: cli.require_each_class,
+    };
+
+    for _ in 0..cli.count {
+        println!("{}", generate_password(&policy));
+    }
 }
