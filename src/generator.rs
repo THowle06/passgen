@@ -61,3 +61,42 @@ pub fn generate_password(policy: &PasswordPolicy) -> String {
 
     password.iter().collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn default_policy() -> PasswordPolicy {
+        PasswordPolicy {
+            length: 16,
+            include_upper: true,
+            include_lower: true,
+            include_digits: true,
+            include_symbols: true,
+            require_each_class: false,
+        }
+    }
+
+    #[test]
+    fn no_symbols_when_disabled() {
+        let mut policy = default_policy();
+        policy.include_symbols = false;
+
+        let pwd = generate_password(&policy);
+
+        assert!(pwd.chars().all(|c| c.is_ascii_alphanumeric()));
+    }
+
+    #[test]
+    fn includes_all_classes_when_required() {
+        let mut policy = default_policy();
+        policy.require_each_class = true;
+
+        let pwd = generate_password(&policy);
+
+        assert!(pwd.chars().any(|c| c.is_ascii_uppercase()));
+        assert!(pwd.chars().any(|c| c.is_ascii_lowercase()));
+        assert!(pwd.chars().any(|c| c.is_ascii_digit()));
+        assert!(pwd.chars().any(|c| "!@#$%^&*()-_+=?".contains(c)));
+    }
+}
