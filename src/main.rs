@@ -41,8 +41,17 @@ fn validate_cli(cli: &Cli) -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(feature = "clipboard-support")]
+fn copy_to_clipboard(s: &str) -> Result<(), Box<dyn std::error::Error>> {
+    use clipboard::ClipboardProvider;
+    let mut ctx: clipboard::ClipboardContext = ClipboardProvider::new()?;
+    ctx.set_contents(s.to_string())?;
+    Ok(())
+}
+
 fn main() {
     let cli = Cli::parse();
+
     if let Err(e) = validate_cli(&cli) {
         eprintln!("Error: {}", e);
         std::process::exit(1);
@@ -57,7 +66,30 @@ fn main() {
         require_each_class: cli.require_each_class,
     };
 
+    // Generate passwords
+    let mut results: Vec<String> = Vec::new();
     for _ in 0..cli.count {
-        println!("{}", generate_password(&policy));
+        results.push(generate_password(&policy));
+    }
+
+    // Print output
+    for pwd in &results {
+        println!("{}", pwd);
+    }
+
+    // Clipboard support
+    #[cfg(feature = "clipboard-support")]
+    if cli.clipboard {
+        let joined = results.join("\n");
+
+        if let Err(e) = copy_to_clipboard(&joined) {
+            eprintln!("Clipboard error: {}", e);
+        }
+    }
+
+    // Warn if feature not enabled
+    #[cfg(not(feature = "clipboard-support"))]
+    if cli.clipboard {
+        eprintln!("Clipboard support not enabled. Recompile with --features clipboard-support");
     }
 }
