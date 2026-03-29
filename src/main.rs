@@ -26,7 +26,25 @@ struct Cli {
     clipboard: bool,
 }
 
+fn validate_cli(cli: &Cli) -> Result<(), String> {
+    let min_length = if cli.require_each_class { 4 } else { 1 };
+    if cli.length < min_length {
+        return Err(format!(
+            "Password length must be at least {} when require_each_class is enabled",
+            min_length
+        ));
+    }
+    if cli.count == 0 {
+        return Err("Count must be greater than 0".to_string());
+    }
+    Ok(())
+}
+
 fn main() {
     let cli = Cli::parse();
+    if let Err(e) = validate_cli(&cli) {
+        eprintln!("Error: {}", e);
+        std::process::exit(1);
+    }
     println!("{:?}", cli);
 }
