@@ -42,6 +42,10 @@ pub fn generate_password(policy: &PasswordPolicy) -> String {
         enabled_sets.push(&symbols);
     }
 
+    if all_chars.is_empty() {
+        panic!("No character sets enabled");
+    }
+
     // Ensure at least one from each class
     if policy.require_each_class {
         for set in &enabled_sets {
@@ -60,6 +64,33 @@ pub fn generate_password(policy: &PasswordPolicy) -> String {
     password.shuffle(&mut rng);
 
     password.iter().collect()
+}
+
+pub fn calculate_entropy(policy: &PasswordPolicy) -> f64 {
+    let mut charset_size = 0;
+
+    if policy.include_upper {
+        charset_size += 26;
+    }
+    if policy.include_lower {
+        charset_size += 26;
+    }
+    if policy.include_digits {
+        charset_size += 10;
+    }
+    if policy.include_symbols {
+        charset_size += 14;
+    }
+
+    (policy.length as f64) * (charset_size as f64).log2()
+}
+
+pub fn classify_entropy(entropy: f64) -> &'static str {
+    match entropy {
+        e if e < 40.0 => "Weak",
+        e if e < 80.0 => "Moderate",
+        _ => "Strong",
+    }
 }
 
 #[cfg(test)]

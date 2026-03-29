@@ -1,10 +1,20 @@
 mod generator;
 
 use clap::Parser;
-use generator::{PasswordPolicy, generate_password};
+use generator::{PasswordPolicy, classify_entropy, generate_password};
 
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
+#[command(
+    author,
+    version,
+    about,
+    after_help = "EXAMPLES:\n\
+    passgen\n\
+    passgen -- length 20 --count 5\n\
+    passgen --no-symbols\n\
+    passgen --require-each-class\n\
+    passgen --show-entropy\n"
+)]
 struct Cli {
     /// Length of each password
     #[arg(short, long, default_value_t = 16)]
@@ -25,6 +35,10 @@ struct Cli {
     /// Copy output to clipboard
     #[arg(long)]
     clipboard: bool,
+
+    /// Display entropy information
+    #[arg(long)]
+    show_entropy: bool,
 }
 
 fn validate_cli(cli: &Cli) -> Result<(), String> {
@@ -44,6 +58,7 @@ fn validate_cli(cli: &Cli) -> Result<(), String> {
 #[cfg(feature = "clipboard-support")]
 fn copy_to_clipboard(s: &str) -> Result<(), Box<dyn std::error::Error>> {
     use clipboard::ClipboardProvider;
+
     let mut ctx: clipboard::ClipboardContext = ClipboardProvider::new()?;
     ctx.set_contents(s.to_string())?;
     Ok(())
@@ -66,6 +81,10 @@ fn main() {
         require_each_class: cli.require_each_class,
     };
 
+    // Compute entropy once
+    let entropy = generator::calculate_entropy(&policy);
+    let strength = classify_entropy(entropy);
+
     // Generate passwords
     let mut results: Vec<String> = Vec::new();
     for _ in 0..cli.count {
@@ -75,6 +94,11 @@ fn main() {
     // Print output
     for pwd in &results {
         println!("{}", pwd);
+    }
+
+    // Print entropy
+    if cli.show_entropy {
+        println!("\nEntropy: {:.2} bits ({})", entropy, strength);
     }
 
     // Clipboard support
