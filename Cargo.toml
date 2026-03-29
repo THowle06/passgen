@@ -10,3 +10,7 @@ rand = "0.10.0"
 
 [features]
 clipboard-support = ["clipboard"]
+
+[dev-dependencies]
+assert_cmd = "2.2.0"
+predicates = "3.1.4"
