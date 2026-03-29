@@ -99,4 +99,19 @@ mod tests {
         assert!(pwd.chars().any(|c| c.is_ascii_digit()));
         assert!(pwd.chars().any(|c| "!@#$%^&*()-_+=?".contains(c)));
     }
+
+    #[test]
+    fn works_with_minimum_length_require_each_class() {
+        let policy = PasswordPolicy {
+            length: 4,
+            include_upper: true,
+            include_lower: true,
+            include_digits: true,
+            include_symbols: true,
+            require_each_class: true,
+        };
+
+        let pwd = generate_password(&policy);
+        assert_eq!(pwd.len(), 4);
+    }
 }
